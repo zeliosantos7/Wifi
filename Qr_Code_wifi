@@ -1,0 +1,58 @@
+import qrcode
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import os
+
+# Solicitar o nome da rede Wi-Fi e a senha
+nome_wifi = input("Digite o nome da rede Wi-Fi: ")
+senha_wifi = input("Digite a senha da rede Wi-Fi: ")
+
+# Gerar o QR code com as informações da rede Wi-Fi
+qr = qrcode.QRCode(
+    version=1,
+    error_correction=qrcode.constants.ERROR_CORRECT_L,
+    box_size=8, # Tamanho do QR code
+    border=5, # Largura da borda
+)
+qr.add_data(f"WIFI:T:WPA;S:{nome_wifi};P:{senha_wifi};;")
+qr.make(fit=True)
+
+# Definir o caminho para a pasta "Downloads"
+pasta_downloads = "/storage/emulated/0/Download/"
+
+# Criar um PDF em branco
+output_pdf = os.path.join(pasta_downloads, f"wifi_QR_{nome_wifi}.pdf")
+c = canvas.Canvas(output_pdf, pagesize=letter)
+
+# Salvar o QR code como um arquivo PNG
+# Cor do QR code "black"
+# Cor de fundo "white"
+qr.make_image(fill_color="black",  back_color="white").save(f"wifi_QR_{nome_wifi}.png")
+
+# Obter as dimensões do QR code
+qr_width, qr_height = qr.make_image(fill_color="black", back_color="white").size
+
+# Posições para centralizar o texto sobre o QR code
+text_x = (letter[0] - qr_width) / 2
+text_y = (letter[1] - qr_height) / 2
+
+# Adicionar o QR code ao PDF
+c.drawImage(f"wifi_QR_{nome_wifi}.png", text_x, text_y, width=qr_width, height=qr_height)
+
+# Adicionar a string "Wi-fi" sobre o nome da rede Wi-Fi (ampliado)
+c.setFont("Helvetica", 50)  # Tamanho ampliado
+text_width = c.stringWidth("Wi-fi", "Helvetica", 50)
+c.drawString(text_x + (qr_width - text_width) / 2, text_y + qr_height + 20, "Wi-fi")
+
+# Adicionar o nome da rede Wi-Fi ao pdf
+c.setFont("Helvetica", 12)
+nome_wifi_width = c.stringWidth(nome_wifi, "Helvetica", 12)
+c.drawString(text_x + (qr_width - nome_wifi_width) / 2, text_y + qr_height - 20, nome_wifi)
+
+# Salvar o PDF na pasta "Downloads"
+c.save()
+
+# Remover os arquivos temporários
+os.remove(f"wifi_QR_{nome_wifi}.png")
+
+print(f"\nPDF gerado com o QR code da rede Wi-Fi e salvo em {output_pdf}.")
